@@ -1,6 +1,7 @@
 # Bomber Maze - Matrix Game
 
-![Game Screenshot](Untitled.jpg)
+![Untitled](https://github.com/alexncrsc/Bomb-Maze/assets/61351673/a60442cc-1149-4104-af1e-de38b5e5406d)
+
 
 **Description:**
 
