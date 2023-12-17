@@ -1,6 +1,7 @@
 #include "LedControl.h"
 #include <LiquidCrystal.h>
 #include <EEPROM.h>
+int mute = 1;
 const int buzzDuration = 100;
 unsigned long buzzStartTime = 0;
 int BUZZER_PIN = 11;
@@ -19,6 +20,7 @@ int level;
 int highscore_1;
 int highscore_2;
 int highscore_3;
+
 char player_1[3] = "ZAC";
 char player_2[3] = "BRV";
 char player_3[3];
@@ -180,6 +182,7 @@ void setup() {
   lcd.createChar(6, sign);
   lcd.begin(16, 2);
   pinMode(6, OUTPUT);
+  mute = EEPROM.read(15);
   lcdBrightness = EEPROM.read(0);
   matrixBrightness = EEPROM.read(1);
   highscore_1 = EEPROM.read(2);
@@ -238,11 +241,16 @@ void isCollision(Player& player, Bomb& bomb) {
 
   for (int i = 0; i < maxWalls; i++) {
     if (((abs(bomb.x - walls[i].x) == 1 && bomb.y == walls[i].y) || (bomb.x == walls[i].x && abs(bomb.y - walls[i].y) == 1)) && explosion == 1) {
-      walls[i].x = -1, walls[i].y = -1, walls[i].draw(), count = count - 1, score = score + level, tone(BUZZER_PIN, buzzerTone_HIGH, toneDuration_SHORT), analogWrite(6, lcdBrightness);
+      walls[i].x = -1, walls[i].y = -1, walls[i].draw(), count = count - 1, score = score + level, analogWrite(6, lcdBrightness);
+      if(mute==1)
+        tone(BUZZER_PIN, buzzerTone_HIGH, toneDuration_SHORT);
     }
   }
   if (((abs(bomb.x - player.x) == 1 && bomb.y == player.y) || (bomb.x == player.x && abs(bomb.y - player.y) == 1)) && explosion == 1) {
-    tone(BUZZER_PIN, buzzerTone, toneDuration), analogWrite(6, lcdBrightness), analogWrite(6, lcdBrightness), endGame();
+    if(mute==1)
+        tone(BUZZER_PIN, buzzerTone, toneDuration); 
+    analogWrite(6, lcdBrightness), analogWrite(6, lcdBrightness), endGame();
+    
   }
 }
 
@@ -371,9 +379,8 @@ void showMainMenu() {
   lcd.write((byte)5);  // Display the settings wheel
 
   lcd.setCursor(0, 1);
-  lcd.print("3.About");
-  lcd.setCursor(8, 1);
-  lcd.write((byte)6);
+  lcd.print("3.About 4.GameST.");
+  lcd.setCursor(6, 1);
   lcd.write((byte)6);
   // Read user choice from Serial Monitor
   int choice = readChoice();
@@ -390,7 +397,7 @@ void showMainMenu() {
       showAbout();
       break;
     case 4:
-      endGame();
+      GameSettings();
       break;
   }
 }
@@ -913,4 +920,44 @@ void buzzWithoutDelay() {
     // Reset the start time for the next buzz
     buzzStartTime = millis();
   }
+}
+
+void GameSettings() {
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  if (mute == 1)
+    lcd.print("Press 1 to mute");
+  else
+    lcd.print("Press 1 to unmute");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Press 2 to reset highscore");
+  while (Serial.parseInt()!=3) {
+    int choice = readChoice();
+
+    // Handle user selection
+    switch (choice) {
+      case 1:
+        mute = -mute;
+        EEPROM.write(15, mute);
+        break;
+      case 2:
+        reset_highscore();
+        break;
+    }
+  }
+  showMainMenu();
+}
+
+void reset_highscore() {
+  EEPROM.write(2, 0);
+  EEPROM.write(3, 0);
+  EEPROM.write(4, 0);
+  EEPROM.write(5, 'N');
+  EEPROM.write(6, 'N');
+  EEPROM.write(7, 'N');
+  EEPROM.write(8, 'N');
+  EEPROM.write(9, 'N');
+  EEPROM.write(10, 'N');
 }
