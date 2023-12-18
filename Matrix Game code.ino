@@ -259,7 +259,7 @@ void handleJoystick(Player& player) {
   const int joyX = analogRead(joyXPin);
   const int joyY = analogRead(joyYPin);
 
-  // Define a dead zone to ignore small fluctuations when the joystick is released
+  
   const int deadZone = 100;
 
   // Map joystick values to player movement, considering the dead zone
@@ -274,7 +274,7 @@ void handleJoystick(Player& player) {
     deltaY = (joyY < 512) ? 1 : -1;
   }
 
-  // Ensure the player moves only one position at a time
+  
   const int movementSpeed = 200;
   long currentTime = millis();
 
@@ -323,11 +323,11 @@ void reset() {
 
 
 bool isWallInDirection(Player& player, int deltaX, int deltaY) {
-  // Calculate the new position after the move
+  
   int newX = player.x + deltaX;
   int newY = player.y + deltaY;
 
-  // Check if the new position is within the bounds of the LED matrix
+  
   if (newX < 0 || newX >= 8 || newY < 0 || newY >= 8) {
     return true;  // The move is out of bounds, treat it as a wall
   }
@@ -388,7 +388,7 @@ void showMainMenu() {
   // Handle user selection
   switch (choice) {
     case 1:
-      startGame();
+      instructions();
       break;
     case 2:
       showSettingsMenu();
@@ -681,17 +681,6 @@ void endGame() {
   int empty = readChoice();
   showMainMenu();
 }
-void win() {
-  eraseAllEntities(player, bomb);
-  ctime = millis();
-  lc.setLed(0, bomb.x, bomb.y + 1, false);
-  lc.setLed(0, bomb.x - 1, bomb.y, false);
-  lc.setLed(0, bomb.x + 1, bomb.y, false);
-  lc.setLed(0, bomb.x, bomb.y - 1, false);
-  lc.setLed(0, bomb.x, bomb.y, false);
-  bomb.x = -1, bomb.y = -1;
-  var = 1;
-}
 
 void handleJoystickInput() {
   lcd.clear();
@@ -790,7 +779,7 @@ void level_2() {
     lcd.setCursor(0, 0);
     lcd.print("PRESS 1");
   }
-  int nr, a, b, c;
+  int nr=0, a, b, c;
   a = 0, b = 0, c = 0;
   while (Serial.parseInt() != 1) {
     lcd.clear();
@@ -798,11 +787,11 @@ void level_2() {
     lcd.print("You did better than");
     lcd.setCursor(0, 1);
 
-    if (score > highscore_1 && a == 0)
+    if (score > highscore_1 && a == 0 && highscore_1>0)
       nr++, a = 1;
-    if (score > highscore_2 && b == 0)
+    if (score > highscore_2 && b == 0  && highscore_2>0)
       nr++, b = 1;
-    if (score > highscore_3 && c == 0)
+    if (score > highscore_3 && c == 0  && highscore_3>0)
       nr++, c = 1;
     lcd.print(nr);
     lcd.setCursor(4, 1);
@@ -810,8 +799,8 @@ void level_2() {
   }
 
   while (true) {
-    if (count == 1)
-      level_2();
+    if (score == 19)
+       win();
     drawAllEntities(player, bomb);
     handleJoystick(player);
     isCollision(player, bomb);
@@ -933,9 +922,10 @@ void GameSettings() {
 
   lcd.setCursor(0, 1);
   lcd.print("Press 2 to reset highscore");
-  while (Serial.parseInt()!=3) {
+  int aux=Serial.parseInt();
+  while (aux!=3) {
     int choice = readChoice();
-
+    aux=choice;
     // Handle user selection
     switch (choice) {
       case 1:
@@ -944,7 +934,8 @@ void GameSettings() {
         break;
       case 2:
         reset_highscore();
-        break;
+        break;    
+        
     }
   }
   showMainMenu();
@@ -960,4 +951,41 @@ void reset_highscore() {
   EEPROM.write(8, 'N');
   EEPROM.write(9, 'N');
   EEPROM.write(10, 'N');
+}
+void instructions(){
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("How to play");
+  lcd.setCursor(0, 1);
+  lcd.print("Press and run ;)");
+  // Display information about the game and its creators
+  while (Serial.parseInt() != 1) {
+    // Wait for the button to be pressed
+  }
+
+  startGame();
+}
+
+void win(){
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("You won!");
+  lcd.setCursor(0, 1 );
+  lcd.print("Good job!");
+  // Display information about the game and its creators
+  eraseAllEntities(player, bomb);
+  ctime = millis();
+  lc.setLed(0, bomb.x, bomb.y + 1, false);
+  lc.setLed(0, bomb.x - 1, bomb.y, false);
+  lc.setLed(0, bomb.x + 1, bomb.y, false);
+  lc.setLed(0, bomb.x, bomb.y - 1, false);
+  lc.setLed(0, bomb.x, bomb.y, false);
+  bomb.x = -1, bomb.y = -1;
+  var = 1;
+  while (Serial.parseInt() != 1) {
+    // Wait for the button to be pressed
+  }
+  reset();
+showMainMenu();
+
 }
